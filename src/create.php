@@ -1,28 +1,32 @@
 <?php
-require '../connection.php';
-
+require_once __DIR__ . '/connection.php';
 session_start();
 
 // Check if the form has been submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $title = mysqli_real_escape_string($connection, $_POST['title']);
-    $description = mysqli_real_escape_string($connection, $_POST['description']);
-    $event_date = mysqli_real_escape_string($connection, $_POST['event_date']);
+    $title = $_POST['title'] ?? '';
+    $description = $_POST['description'] ?? '';
+    $event_date = $_POST['event_date'] ?? '';
 
-    // Insert the new event into the database
-    $insert_query = "INSERT INTO events (title, description, event_date) VALUES ('$title', '$description', '$event_date')";
-    
-    if (mysqli_query($connection, $insert_query)) {
-        // Redirect to the events page after successful insertion
-        header("Location: http://localhost/php-projects/Event%20Registration%20System/admin-panel.php");
-        exit();
-    } else {
-        echo "Error creating event: " . mysqli_error($connection);
+    try {
+        // Prepare the insert query using PDO
+        $stmt = $connection->prepare("INSERT INTO events (title, description, event_date) VALUES (:title, :description, :event_date)");
+        $stmt->bindParam(':title', $title);
+        $stmt->bindParam(':description', $description);
+        $stmt->bindParam(':event_date', $event_date);
+
+        if ($stmt->execute()) {
+            // Redirect to the events page after successful insertion
+            header("Location: admin-panel.php");
+            exit();
+        } else {
+            echo "Error creating event.";
+        }
+    } catch (PDOException $e) {
+        echo "Database error: " . $e->getMessage();
     }
 }
 ?>
-
-
 
 
 <!DOCTYPE html>
@@ -36,7 +40,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <body>
 <div class="container">
     <h2>Create New Event</h2>
-    <form method="POST" action="create.php">
+    <form method="POST">
         <div class="mb-3">
             <label for="title" class="form-label">Event Title</label>
             <input type="text" name="title" class="form-control" required>
@@ -53,9 +57,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <a href="events.php" class="btn btn-secondary">Cancel</a>
     </form>
 </div>
-
-
-
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>

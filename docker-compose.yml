@@ -1,0 +1,42 @@
+services:
+  php_apache:
+    build: .
+    container_name: php_apache_container
+    ports:
+      - "8080:80"
+    volumes:
+      - ./src:/var/www/html
+      - ./config:/var/www/config
+      - ./scripts:/var/www/scripts
+    depends_on:
+      - mysql_db 
+    networks:
+      - event_network
+
+  mysql_db:
+    image: mysql:5.7
+    container_name: mysql_container
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: event_db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - event_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  db_data:
+
+networks:
+  event_network:
+    driver: bridge
