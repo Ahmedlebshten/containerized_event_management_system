@@ -25,18 +25,47 @@ Technologies Used:
 - Dotenv for environment variable management
 - mysqldump for database backups
 
-Installation and Running Steps:
-Open the terminal and clone the project:
+Install Requirements Tools:
+For Windows
 
+- Install docker  https://docs.docker.com/desktop/setup/install/windows-install/
+- Install git  https://git-scm.com/download/win
+
+For Linux (Ubuntu/Debian)
+
+- Install git:
+sudo apt update
+sudo apt install git -y
+
+- Install docker:
+sudo apt install docker.io -y
+sudo systemctl start docker
+sudo systemctl enable docker
+
+- Install docker compose:
+sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" \-o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+
+- Verify installation:
+docker --version
+docker-compose --version
+
+
+Clone the project:
+Open the terminal:
 - git clone https://github.com/Ahmedlebshten/containerized_event_management_system.git
 - cd containerized_event_management_system
 
 Run the entire project:
-
 - bash scripts/start.sh
+
+Access the App:
+After the containers start:
+
+Web App: http://localhost:8080
+Admin Panel: http://localhost:8080/admin
 
 Database Backup (Optional):
 At any time, you can create a backup of the database with:
-
 - bash scripts/backup_db.sh
 
