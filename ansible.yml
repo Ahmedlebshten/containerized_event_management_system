@@ -1,0 +1,86 @@
+---
+# Automate all proccess
+
+- name: Bootstrap & Run Event Management System
+  hosts: localhost
+  become: false
+  vars_prompt:
+    - name: "run_backup"
+      prompt: "Do you want to create a database backup now? (yes/no):"
+      private: no
+
+  tasks:
+
+    - name: Check if Git is installed
+      command: git --version
+      register: git_check
+      ignore_errors: true
+
+    - name: Warn user if Git is not installed
+      when: git_check.rc != 0
+      debug:
+        msg: |
+          Git is not installed!
+          To install Git, run the following command:
+          sudo apt update && sudo apt install git         # for Ubuntu/Debian
+          sudo yum install git                            # for CentOS/RHEL
+          
+    - name: Check if Docker is installed
+      command: docker --version
+      register: docker_check
+      ignore_errors: true
+
+    - name: Warn user if Docker is not installed
+      when: docker_check.rc != 0
+      debug:
+        msg: |
+          Docker is not installed!
+          To install Docker, run the following commands:
+          sudo apt-get update
+          sudo apt-get install apt-transport-https ca-certificates curl software-properties-common
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+          sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+          sudo apt-get update
+          sudo apt-get install docker-ce         # for Ubuntu/Debian
+          sudo yum install docker                # for CentOS/RHEL
+          
+    - name: Check if Docker Compose is installed (v2 or v1)
+      shell: |
+        docker compose version || docker-compose --version
+      register: compose_check
+      ignore_errors: true
+
+    - name: Warn user if Docker Compose is not installed
+      when: compose_check.rc != 0
+      debug:
+        msg: |
+          Docker Compose is not installed!
+          To install Docker Compose, run the following command:
+          sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
+          sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
+          # Verify installation with:
+          docker-compose --version
+          
+    - name: Run the project if all tools are available
+      when:
+        - git_check.rc == 0
+        - docker_check.rc == 0
+        - compose_check.rc == 0
+      shell: bash scripts/start.sh
+      args:
+        chdir: "{{ playbook_dir }}"
+
+    - name: Run database backup if user answered 'yes'
+      when: run_backup == 'yes'
+      shell: bash scripts/backup.sh
+      args:
+        chdir: "{{ playbook_dir }}"
+
+    - name: Notify user that setup is complete
+      when:
+      - git_check.rc == 0
+      - docker_check.rc == 0
+      - compose_check.rc == 0
+      debug:
+        msg: "✅ Project setup is complete and running successfully!"
